@@ -88,7 +88,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from skimage.io import imshow
 print("faces image size : ",faces_image.shape )
-loadImage = faces_image[100]
+loadImage = faces_image[105]
 print("Olivetti dataset image test dim : ", loadImage.shape)
 imshow(loadImage) 
 
@@ -187,18 +187,19 @@ for i , ax in enumerate(axes.flat):
 
 plt.show()
 
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades+ 'haarcascade_frontalface_default.xml')
-test_image_model = cv2.imread("Amelia_Vega_0006.jpg")
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades+'haarcascade_frontalface_default.xml')
+test_image_model = cv2.imread("messi.png")
 # Convert the image to grayscale
 grayscale_image = cv2.cvtColor(test_image_model, cv2.COLOR_BGR2GRAY)
 # Resize the grayscale image to (64, 64)
 resized_image = resize(grayscale_image, (64, 64), anti_aliasing=True)
 faces = face_cascade.detectMultiScale(grayscale_image,1.1,4)
+print("faces :",faces)
 test_image_data = resized_image.reshape(1, -1)
 test_image_pca = pca.transform(test_image_data)
 prediction_test_image = classifier_svm.predict(test_image_pca)
 
-print("predicted person id is  : ", prediction_test_image.shape[0])
+print("predicted person id is  : ", prediction_test_image)
 
 # Get the predicted person name or ID
 # Get the predicted person name or ID
