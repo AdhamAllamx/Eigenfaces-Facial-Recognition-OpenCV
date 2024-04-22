@@ -1,5 +1,4 @@
 from __future__ import print_function
-from time import time
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
@@ -10,68 +9,33 @@ from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report, confusion_matrix
 from skimage.transform import resize
-from skimage.io import imshow
+from imblearn.over_sampling import SMOTE
 
-# Dictionary of person names (example shown earlier would be reused here)
+# Dictionary for person names
 person_names = {
-    0: "Federico_Cuomo",
-    1: "Mario_Rossi",
-    2: "Giovanni_Bianchi",
-    3: "Giulia_Verdi",
-    4: "Francesca_Neri",
-    5: "Laura_Russo",
-    6: "Alessandro_Ferrari",
-    7: "Roberto_Romano",
-    8: "Simone_Gallo",
-    9: "Elena_Marini",
-    10: "Marco_Conti",
-    11: "Sara_Galli",
-    12: "Antonio_Rinaldi",
-    13: "Valentina_Costa",
-    14: "Andrea_Moretti",
-    15: "Chiara_De_Luca",
-    16: "Stefano_Gatti",
-    17: "Maria_Colombo",
-    18: "Luca_Santini",
-    19: "Giorgio_Ferrara",
-    20: "Paola_Vitale",
-    21: "Claudio_Longo",
-    22: "Anna_Galli",
-    23: "Davide_Moretti",
-    24: "Silvia_Conti",
-    25: "Enrico_Caputo",
-    26: "Elisa_Riva",
-    27: "Massimo_Battaglia",
-    28: "Teresa_Milani",
-    29: "Giacomo_Delvecchio",
-    30: "Monica_Piras",
-    31: "Fabrizio_Costantini",
-    32: "Patrizia_Bruno",
-    33: "Gianluca_Ruggiero",
-    34: "Silvia_Farina",
-    35: "Federica_Monti",
-    36: "Alessio_Villa",
-    37: "Elisabetta_Pellegrini",
-    38: "Alberto_De_Luca",
-    39: "Cristina_Vitale",
-    40: "Alvaro_Uribe"
+    1: "Alvaro_Uribe",
+    2: "Atal_Bihari_Vajpayee",
+    3: "George_Robertson",
+    4: "George_W_Bush",
+    5: "Junichiro_Koizumi"
 }
 
 # Load the dataset
-faces_image = np.load('./input_dataset/olivetti_faces.npy')
-faces_target = np.load('./input_dataset/olivetti_faces_target.npy')
+faces_image = np.load('./input_dataset/new_faces_training.npy')
+faces_target = np.load('./input_dataset/new_faces_targets.npy')
 
-print("faces image new set sahape :",faces_image.shape)
+print("faces image new set shape:", faces_image.shape)
+print("new faces target shape:", faces_target.shape)
 
 # Reshape the image data into vectors
-n_samples, n_row, n_col = faces_image.shape[0], faces_image.shape[1], faces_image.shape[2]
+n_samples, n_row, n_col = faces_image.shape
 faces_data = faces_image.reshape(n_samples, n_row * n_col)
 
 # Prepare the training and test data
-X_train, X_test, y_train, y_test = train_test_split(faces_data, faces_target, test_size=0.25, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(faces_data, faces_target, test_size=0.05, random_state=10)
 
 # PCA for dimensionality reduction
-n_components = 150
+n_components = 29
 print("Extracting the top %d eigenfaces from %d faces" % (n_components, X_train.shape[0]))
 pca = PCA(n_components=n_components, svd_solver='randomized', whiten=True)
 pca.fit(X_train)
@@ -79,69 +43,58 @@ pca.fit(X_train)
 X_train_pca = pca.transform(X_train)
 X_test_pca = pca.transform(X_test)
 
+# Apply SMOTE for balancing dataset (commented if imbalance is not a concern)
+smote = SMOTE()
+X_train_pca, y_train = smote.fit_resample(X_train_pca, y_train)
+
 # Isolation Forest for anomaly detection
-iso_forest = IsolationForest(n_estimators=100, contamination=0.01)
+iso_forest = IsolationForest(n_estimators=30, contamination=0.005)
 iso_forest.fit(X_train_pca)
 
-# Support Vector Machine classifier
+# Support Vector Machine classifier with extended parameter grid and probability estimation
 param_grid = {
-    'C': [1e3, 5e3, 1e4, 5e4, 1e5],
-    'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],
+    'C': np.logspace(-2, 10, 13),
+    'gamma': np.logspace(-9, 3, 13),
+    'kernel': ['rbf', 'linear', 'poly']
 }
-clf = GridSearchCV(SVC(kernel='rbf', class_weight='balanced'), param_grid)
-clf = clf.fit(X_train_pca, y_train)
+clf = GridSearchCV(SVC(class_weight='balanced', probability=True), param_grid, cv=10)
+clf.fit(X_train_pca, y_train)
 
 # Evaluate the model
 print("Predicting people's names on the test set")
 y_pred = clf.predict(X_test_pca)
-print(classification_report(y_test, y_pred))
+print(classification_report(y_test, y_pred, zero_division=1))
 print(confusion_matrix(y_test, y_pred))
 
-# Load the Haar Cascade
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-test_image_path = "./input_dataset/Alvaro_Uribe_test/Alvaro_Uribe_0016.jpg"
-
-# Load your image
-img = cv2.imread(test_image_path)
-if img is None:
-    print("Image not found!")
-
-# Convert to grayscale
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-# Detect faces
-faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
-
 # Prepare an external image for prediction
-test_image_path = "allam.png"
+test_image_path = "./input_dataset/George_Robertson/George_Robertson_0002.jpg"
 test_image = cv2.imread(test_image_path)
-gray_test_image = cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
-resized_test_image = resize(gray_test_image, (n_row, n_col), anti_aliasing=True).reshape(1, -1)
-test_image_pca = pca.transform(resized_test_image)
-
-# Anomaly detection
-is_outlier = iso_forest.predict(test_image_pca)
-if is_outlier == -1:
-    predicted_person = "Unknown"
+if test_image is None:
+    print("Test image not found!")
 else:
-    predicted_person_id = clf.predict(test_image_pca)[0]
-    predicted_person = person_names.get(predicted_person_id, "Unknown")
+    gray_test_image = cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
+    resized_test_image = resize(gray_test_image, (n_row, n_col), anti_aliasing=True).reshape(1, -1)
+    test_image_pca = pca.transform(resized_test_image)
 
-# Display the results
+    # Anomaly detection
+    is_outlier = iso_forest.predict(test_image_pca)
+    if is_outlier == -1:
+        predicted_person = "Unknown"
+    else:
+        # Predict with confidence score
+        probabilities = clf.predict_proba(test_image_pca)[0]
+        predicted_probability = np.max(probabilities)
+        predicted_person_id = np.argmax(probabilities) + 1  # adjust index to match person_names keys
+        threshold = 0.4 # Confidence threshold
 
+        if predicted_probability < threshold:
+            predicted_person = "Unknown"
+        else:
+            predicted_person = person_names.get(predicted_person_id, "Unknown")
 
-# Draw rectangles around each face
-for (x, y, w, h) in faces:
-    cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
-# convert the gray color to rgb
-
-img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-
-fig, ax = plt.subplots()
-plt.imshow(img_rgb)
-plt.axis("off")  # Turn off axis numbers and ticks
-ax.imshow(cv2.cvtColor(test_image, cv2.COLOR_BGR2RGB))
-ax.set_title(f"Predicted Person: {predicted_person}")
-ax.axis('off')
-plt.show()
+    # Display the result
+    cv2.putText(test_image, f"{predicted_person} ({predicted_probability:.2f})", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+    plt.imshow(cv2.cvtColor(test_image, cv2.COLOR_BGR2RGB))
+    plt.title(f"Predicted Person: {predicted_person}")
+    plt.axis('off')
+    plt.show()
