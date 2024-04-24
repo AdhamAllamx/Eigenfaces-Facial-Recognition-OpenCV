@@ -3,16 +3,39 @@ import cv2
 from skimage.transform import resize
 
 def preprocess_images(images, n_row=64, n_col=64):
+    # Load the Haar Cascade for face detection
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    
     processed_images = np.zeros((len(images), n_row, n_col))  # Keeping as a 2D array per image
     for i, img_path in enumerate(images):
         formatted_path = img_path.replace('/', '\\')  # Correct path format for Windows
-        img = cv2.imread(formatted_path, cv2.IMREAD_GRAYSCALE)
+        img = cv2.imread(formatted_path)
         if img is None:
             raise FileNotFoundError(f"Image at {formatted_path} could not be loaded. Check the file path.")
-        if img.shape[0] != n_row or img.shape[1] != n_col:
-            img = resize(img, (n_row, n_col), anti_aliasing=True)
-        processed_images[i] = img  # Assign the resized image directly
+        
+        # Convert to grayscale for face detection
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Detect faces in the image
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
+        
+        if len(faces) == 0:
+            raise ValueError(f"No face detected in the image at {formatted_path}.")
+        
+        # Assume the first detected face is the target face
+        x, y, w, h = faces[0]
+        face = gray[y:y+h, x:x+w]  # Crop the face
+        
+        # Resize the face to the desired dimensions
+        resized_face = resize(face, (n_row, n_col), anti_aliasing=True)
+        
+        processed_images[i] = resized_face  # Assign the resized image directly
+    
     return processed_images
+
+# Note: rest of the code remains the same.
+
+
 
 def append_and_save_data(new_images, new_targets, dataset_path):
     existing_images = np.load(dataset_path + 'olivetti_faces.npy')
@@ -46,16 +69,6 @@ new_images = [
     './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0008.jpg',
     './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0009.jpg',
     './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0010.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0011.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0012.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0013.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0014.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0015.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0016.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0017.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0018.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0019.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0020.jpg',
     './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0001.jpg',
     './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0002.jpg',
     './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0003.jpg',
@@ -66,16 +79,6 @@ new_images = [
     './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0008.jpg',
     './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0009.jpg',
     './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0010.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0011.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0012.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0013.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0014.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0015.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0016.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0017.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0018.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0019.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0020.jpg',
     './input_dataset/George_Robertson/George_Robertson_0001.jpg',
     './input_dataset/George_Robertson/George_Robertson_0002.jpg',
     './input_dataset/George_Robertson/George_Robertson_0003.jpg',
@@ -86,16 +89,6 @@ new_images = [
     './input_dataset/George_Robertson/George_Robertson_0008.jpg',
     './input_dataset/George_Robertson/George_Robertson_0009.jpg',
     './input_dataset/George_Robertson/George_Robertson_0010.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0011.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0012.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0013.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0014.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0015.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0016.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0017.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0018.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0019.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0020.jpg',
     './input_dataset/George_W_Bush/George_W_Bush_0001.jpg',
     './input_dataset/George_W_Bush/George_W_Bush_0002.jpg',
     './input_dataset/George_W_Bush/George_W_Bush_0003.jpg',
@@ -106,16 +99,6 @@ new_images = [
     './input_dataset/George_W_Bush/George_W_Bush_0008.jpg',
     './input_dataset/George_W_Bush/George_W_Bush_0009.jpg',
     './input_dataset/George_W_Bush/George_W_Bush_0010.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0011.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0012.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0013.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0014.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0015.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0016.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0017.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0018.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0019.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0020.jpg',
     './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0001.jpg',
     './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0002.jpg',
     './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0003.jpg',
@@ -125,25 +108,15 @@ new_images = [
     './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0007.jpg',
     './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0008.jpg',
     './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0009.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0010.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0011.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0012.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0013.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0014.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0015.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0016.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0017.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0018.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0019.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0020.jpg',
+    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0010.jpg'
 
 ]
 
-new_labels = np.array([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-                       2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-                       3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
-                       4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-                       5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5 ])  # Assuming label 40 for all new images
+new_labels = np.array([1,1,1,1,1,1,1,1,1,1,
+                       2,2,2,2,2,2,2,2,2,2,
+                       3,3,3,3,3,3,3,3,3,3,
+                       4,4,4,4,4,4,4,4,4,4,
+                       5,5,5,5,5,5,5,5,5,5])  # Assuming label 40 for all new images
 
 # Process the new images
 preprocessed_new_images = preprocess_images(new_images)

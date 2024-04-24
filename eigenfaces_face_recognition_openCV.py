@@ -29,36 +29,57 @@ print("new faces target shape:", faces_target.shape)
 
 # Reshape the image data into vectors
 n_samples, n_row, n_col = faces_image.shape
+
+# Define how many images you want to display and the grid size
+n_images_to_display = 50  # For example, display 25 images
+plot_grid_size = int(np.ceil(np.sqrt(n_images_to_display)))
+
+fig, axes = plt.subplots(plot_grid_size, plot_grid_size, figsize=(15, 15))
+fig.subplots_adjust(hspace=0.3, wspace=0.3)
+
+for i, ax in enumerate(axes.flat):
+    if i < n_images_to_display:
+        ax.imshow(faces_image[i], cmap='gray')  # Assuming grayscale images
+        ax.set_title(f"Label: {faces_target[i]}")
+        ax.axis('off')
+    else:
+        ax.axis('off')  # Turn off axis for empty plots
+
+plt.show()
+
 faces_data = faces_image.reshape(n_samples, n_row * n_col)
 
-# Prepare the training and test data   // changes 
-X_train, X_test, y_train, y_test = train_test_split(faces_data, faces_target, test_size=0.05, random_state=10)
 
-# PCA for dimensionality reduction ///changes
-n_components = 29
+
+# Prepare the training and test data   // changes 
+X_train, X_test, y_train, y_test = train_test_split(faces_data, faces_target, test_size=0.10, random_state=5)
+
+# Since you have 50 images total, trying a small number of components makes sense
+n_components = 18  # Adjust based on explained variance ratio or via cross-validation
 print("Extracting the top %d eigenfaces from %d faces" % (n_components, X_train.shape[0]))
-pca = PCA(n_components=n_components, svd_solver='randomized', whiten=True)
+pca = PCA(n_components=n_components, whiten=True)
 pca.fit(X_train)
 
 X_train_pca = pca.transform(X_train)
 X_test_pca = pca.transform(X_test)
 
-# Apply SMOTE for balancing dataset (commented if imbalance is not a concern) // changes 
-smote = SMOTE()
-X_train_pca, y_train = smote.fit_resample(X_train_pca, y_train)
+# # Apply SMOTE for balancing dataset (commented if imbalance is not a concern) // changes 
+# smote = SMOTE()
+# X_train_pca, y_train = smote.fit_resample(X_train_pca, y_train)
 
-# Isolation Forest for anomaly detection // changes
-iso_forest = IsolationForest(n_estimators=30, contamination=0.005)
+# Reduce the number of trees and adjust contamination
+iso_forest = IsolationForest(n_estimators=50, contamination='auto')  # auto lets the algorithm determine the threshold based on the data
 iso_forest.fit(X_train_pca)
 
-# Support Vector Machine classifier with extended parameter grid and probability estimation //changes
+
 param_grid = {
-    'C': np.logspace(-2, 10, 13),
-    'gamma': np.logspace(-9, 3, 13),
-    'kernel': ['rbf', 'linear', 'poly']
+    'C': [1, 10, 100],  # Reduced range based on typical good values
+    'gamma': ['scale', 'auto'],  # 'scale' and 'auto' are often sufficient for many cases
+    'kernel': ['rbf', 'linear']  # Removed 'poly' for speed in this example
 }
-clf = GridSearchCV(SVC(class_weight='balanced', probability=True), param_grid, cv=10)
+clf = GridSearchCV(SVC(class_weight='balanced', probability=True), param_grid, cv=5)  # Reduced CV folds
 clf.fit(X_train_pca, y_train)
+
 
 # Evaluate the model
 print("Predicting people's names on the test set")
@@ -67,42 +88,70 @@ print(classification_report(y_test, y_pred, zero_division=1))
 print(confusion_matrix(y_test, y_pred))
 
 # Prepare an external image for prediction
-test_image_path = "allam.png"
+test_image_path = "Junichiro_Koizumi_0001.jpg"
 test_image = cv2.imread(test_image_path)
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 if test_image is None:
     print("Test image not found!")
 else:
+    # Convert to grayscale for face detection
     gray_test_image = cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
-    resized_test_image = resize(gray_test_image, (n_row, n_col), anti_aliasing=True).reshape(1, -1)
-    test_image_pca = pca.transform(resized_test_image)
-    gray_test_image = cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
-    # Detect faces
+    
+    # Detect faces in the image
     faces = face_cascade.detectMultiScale(gray_test_image, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    for (x, y, w, h) in faces:
-        cv2.rectangle(test_image, (x, y), (x+w, y+h), (255, 0, 0), 2)  # Draw rectangle around face
-
-    resized_test_image = resize(gray_test_image, (n_row, n_col), anti_aliasing=True).reshape(1, -1)
-    test_image_pca = pca.transform(resized_test_image)
-    # Anomaly detection // changes
-    is_outlier = iso_forest.predict(test_image_pca)
-    if is_outlier == -1:
-        predicted_person = "Unknown"
+    if len(faces) == 0:
+        print("No face detected in the image.")
     else:
-        # Predict with confidence score
-        probabilities = clf.predict_proba(test_image_pca)[0]
-        predicted_probability = np.max(probabilities)
-        predicted_person_id = np.argmax(probabilities) + 1  # adjust index to match person_names keys
-        threshold = 0.4 # Confidence threshold
+        x, y, w, h = faces[0]  # Assume the first detected face is the target face
+        for (x, y, w, h) in faces:
+            # Draw rectangle around the face
+          cv2.rectangle(test_image, (x, y), (x+w, y+h), (255, 0, 0), 2)
 
-        if predicted_probability < threshold:
-            predicted_person = "Unknown"
+            # Crop the face using detected coordinates
+          face = gray_test_image[y:y+h, x:x+w]
+
+            # Display the original image with detected face marked
+          plt.subplot(1, 2, 1)
+          plt.imshow(cv2.cvtColor(test_image, cv2.COLOR_BGR2RGB))
+          plt.title("Detected Face")
+          plt.axis('off')
+
+            # Display the cropped face
+          plt.subplot(1, 2, 2)
+          plt.imshow(face, cmap='gray')
+          plt.title("Cropped Face")
+          plt.axis('off')
+
+          plt.show()
+
+        face = gray_test_image[y:y+h, x:x+w]  # Crop the face
+        
+        # Resize the face to the desired dimensions
+        resized_face = resize(face, (n_row, n_col), anti_aliasing=True).reshape(1, -1)
+        
+        # PCA transformation
+        test_image_pca = pca.transform(resized_face)
+        
+        # Anomaly detection
+        is_outlier = iso_forest.predict(test_image_pca)
+        print("outlier : ", is_outlier)
+        if is_outlier == -1:
+             predicted_person = "Unknown"
         else:
-            predicted_person = person_names.get(predicted_person_id, "Unknown")
-     
-    # Display the result
-    cv2.putText(test_image, f"{predicted_person} ({predicted_probability:.2f})", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-    plt.imshow(cv2.cvtColor(test_image, cv2.COLOR_BGR2RGB))
-    plt.title(f"Predicted Person: {predicted_person}")
-    plt.axis('off')
-    plt.show()
+            probabilities = clf.predict_proba(test_image_pca)[0]
+            print("possibilties : ",probabilities)
+            predicted_probability = np.max(probabilities)
+            if predicted_probability < 0.40:
+                predicted_person = "Unknown"
+            else:
+                predicted_person_id = np.argmax(probabilities) + 1  # Adjust index
+                print("predicted id : ",predicted_person_id)
+                predicted_person = person_names.get(predicted_person_id, "Unknown")
+
+# Display results
+cv2.rectangle(test_image, (x, y), (x+w, y+h), (255, 0, 0), 2)
+cv2.putText(test_image, f"{predicted_person} ({predicted_probability:.2f})", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
+plt.imshow(cv2.cvtColor(test_image, cv2.COLOR_BGR2RGB))
+plt.title(f"Predicted Person: {predicted_person}")
+plt.axis('off')
+plt.show()
