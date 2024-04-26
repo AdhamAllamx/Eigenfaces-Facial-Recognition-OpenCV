@@ -1,3 +1,1 @@
-Image 1: Predicted Person: Alvaro_Uribe, Probability: 0.31
-Image messi.png: Predicted Person: Adham_Allam, Probability: 0.50
-Image messi.png: Predicted Person: Adham_Allam, Probability: 0.50
+Image 1: Predicted Person: Atal_Bihari_Vajpayee, Probability: 0.31

@@ -33,6 +33,8 @@ print("new faces target shape:", faces_target.shape)
 # Reshape the image data into vectors
 n_samples, n_row, n_col = faces_image.shape
 
+print("targets are : ", faces_target)
+
 # Define how many images you want to display and the grid size
 n_images_to_display = 60 # For example, display 25 images
 plot_grid_size = int(np.ceil(np.sqrt(n_images_to_display)))
@@ -80,7 +82,9 @@ param_grid = {
     'gamma': ['scale', 'auto'],  # 'scale' and 'auto' are often sufficient for many cases
     'kernel': ['rbf', 'linear']  # Removed 'poly' for speed in this example
 }
-clf = GridSearchCV(SVC(class_weight='balanced', probability=True), param_grid, cv=4)   # Reduced CV folds
+# class_weights = {1: 2.0, 2: 2.0, 3: 2.0, 4: 2.0, 5: 2.0, 6: 2.0}
+
+clf = GridSearchCV(SVC(class_weight='balanced' ,probability=True), param_grid, cv=5)   # Reduced CV folds
 clf.fit(X_train_pca, y_train)
 
 
@@ -89,6 +93,14 @@ print("Predicting people's names on the test set")
 y_pred = clf.predict(X_test_pca)
 print(classification_report(y_test, y_pred, zero_division=1))
 print(confusion_matrix(y_test, y_pred))
+
+
+
+plt.plot(np.cumsum(pca.explained_variance_ratio_))
+plt.xlabel('number of components')
+plt.ylabel('cumulative explained variance')
+
+
 
 
 # Save the trained models
