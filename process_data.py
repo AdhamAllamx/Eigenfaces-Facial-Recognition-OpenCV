@@ -17,7 +17,7 @@ def preprocess_images(images, n_row=64, n_col=64):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         
         # Detect faces in the image
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=10, minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
         
         if len(faces) == 0:
             raise ValueError(f"No face detected in the image at {formatted_path}.")
@@ -108,7 +108,17 @@ new_images = [
     './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0007.jpg',
     './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0008.jpg',
     './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0009.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0010.jpg'
+    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0010.jpg',
+    './input_dataset/Adham_Allam/Adham_Allam_0001.png',
+    './input_dataset/Adham_Allam/Adham_Allam_0002.png',
+    './input_dataset/Adham_Allam/Adham_Allam_0003.png',
+    './input_dataset/Adham_Allam/Adham_Allam_0004.png',
+    './input_dataset/Adham_Allam/Adham_Allam_0005.png',
+    './input_dataset/Adham_Allam/Adham_Allam_0006.jpg',
+    './input_dataset/Adham_Allam/Adham_Allam_0007.png',
+    './input_dataset/Adham_Allam/Adham_Allam_0008.png',
+    './input_dataset/Adham_Allam/Adham_Allam_0009.png',
+    './input_dataset/Adham_Allam/Adham_Allam_0010.png'
 
 ]
 
@@ -116,7 +126,8 @@ new_labels = np.array([1,1,1,1,1,1,1,1,1,1,
                        2,2,2,2,2,2,2,2,2,2,
                        3,3,3,3,3,3,3,3,3,3,
                        4,4,4,4,4,4,4,4,4,4,
-                       5,5,5,5,5,5,5,5,5,5])  # Assuming label 40 for all new images
+                       5,5,5,5,5,5,5,5,5,5,
+                       6,6,6,6,6,6,6,6,6,6])  # Assuming label 40 for all new images
 
 # Process the new images
 preprocessed_new_images = preprocess_images(new_images)
