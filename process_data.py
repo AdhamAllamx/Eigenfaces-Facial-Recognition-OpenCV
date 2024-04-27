@@ -1,12 +1,11 @@
 import numpy as np
 import cv2
 from skimage.transform import resize
-
-def preprocess_images(images, n_row=64, n_col=64):
+def preprocess_images(images, n_row=64, n_col=64, save_path='./input_dataset/gray_scale_images/'):
     # Load the Haar Cascade for face detection
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     
-    processed_images = np.zeros((len(images), n_row, n_col))  # Keeping as a 2D array per image
+    processed_images = np.zeros((len(images), n_row, n_col))  # Corrected to create a 3D array
     for i, img_path in enumerate(images):
         formatted_path = img_path.replace('/', '\\')  # Correct path format for Windows
         img = cv2.imread(formatted_path)
@@ -29,6 +28,10 @@ def preprocess_images(images, n_row=64, n_col=64):
         # Resize the face to the desired dimensions
         resized_face = resize(face, (n_row, n_col), anti_aliasing=True)
         
+        # Save the processed image
+        save_filename = f'{save_path}processed_{i}.png'
+        cv2.imwrite(save_filename, (resized_face * 255).astype(np.uint8))  # Convert back to 0-255 range and cast to uint8
+
         processed_images[i] = resized_face  # Assign the resized image directly
     
     return processed_images
@@ -59,75 +62,29 @@ def append_and_save_data(new_images, new_targets, dataset_path):
     np.save(dataset_path + 'new_faces_targets.npy', all_targets)
 # List of new image paths
 new_images = [
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0001.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0002.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0003.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0004.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0005.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0006.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0007.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0008.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0009.jpg',
-    './input_dataset/Alvaro_Uribe/Alvaro_Uribe_0010.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0001.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0002.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0003.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0004.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0005.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0006.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0007.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0008.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0009.jpg',
-    './input_dataset/Atal_Bihari_Vajpayee/Atal_Bihari_Vajpayee_0010.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0001.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0002.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0003.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0004.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0005.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0006.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0007.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0008.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0009.jpg',
-    './input_dataset/George_Robertson/George_Robertson_0010.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0001.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0002.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0003.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0004.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0005.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0006.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0007.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0008.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0009.jpg',
-    './input_dataset/George_W_Bush/George_W_Bush_0010.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0001.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0002.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0003.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0004.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0005.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0006.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0007.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0008.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0009.jpg',
-    './input_dataset/Junichiro_Koizumi/Junichiro_Koizumi_0010.jpg',
-    './input_dataset/Adham_Allam/Adham_Allam_0001.png',
-    './input_dataset/Adham_Allam/Adham_Allam_0002.png',
-    './input_dataset/Adham_Allam/Adham_Allam_0003.png',
-    './input_dataset/Adham_Allam/Adham_Allam_0004.png',
-    './input_dataset/Adham_Allam/Adham_Allam_0005.png',
-    './input_dataset/Adham_Allam/Adham_Allam_0006.jpg',
-    './input_dataset/Adham_Allam/Adham_Allam_0007.png',
-    './input_dataset/Adham_Allam/Adham_Allam_0008.png',
-    './input_dataset/Adham_Allam/Adham_Allam_0009.png',
-    './input_dataset/Adham_Allam/Adham_Allam_0010.png'
+    # './input_dataset//henry_cavil_1.png',
+    # './input_dataset/henry_cavil/henry_cavil_2.jpg',
+    # './input_dataset/henry_cavil/henry_cavil_3.jpeg',
+    # './input_dataset/henry_cavil/henry_cavil_4.jpeg',
+    # './input_dataset/henry_cavil/henry_cavil_5.jpeg',
+
+    # './input_dataset/Adham_Allam/adham1.png',
+    './input_dataset/dua_lipa/dua_lipa_1.jpg',
+
+
+    # './input_dataset/scarelett_johansson/scarelett_johansson_1.jpeg',
+    # './input_dataset/scarelett_johansson/scarelett_johansson_2.jpeg',
+    # './input_dataset/scarelett_johansson/scarelett_johansson_3.jpg',
+    # './input_dataset/scarelett_johansson/scarelett_johansson_4.jpg',
+    # './input_dataset/scarelett_johansson/scarelett_johansson_5.jpg'
 
 ]
 
-new_labels = np.array([1,1,1,1,1,1,1,1,1,1,
-                       2,2,2,2,2,2,2,2,2,2,
-                       3,3,3,3,3,3,3,3,3,3,
-                       4,4,4,4,4,4,4,4,4,4,
-                       5,5,5,5,5,5,5,5,5,5,
-                       6,6,6,6,6,6,6,6,6,6])  # Assuming label 40 for all new images
+save_path = './input_dataset/gray_scale_images/'
+
+new_labels = np.array([9,9,9,9,9,9,9,9,9,9,
+                       10,10,10,10,10,10,10,10,10,10
+                    ])  # Assuming label 40 for all new images
 
 # Process the new images
 preprocessed_new_images = preprocess_images(new_images)

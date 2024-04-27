@@ -1,1 +1,0 @@
-Image 1: Predicted Person: Atal_Bihari_Vajpayee, Probability: 0.31
