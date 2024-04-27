@@ -18,10 +18,7 @@ aug_transformation = A.Compose([
     A.Rotate(limit=20),
     A.HorizontalFlip(p=0.5),
     A.RandomBrightnessContrast(p=0.2),  # Adjust brightness and contrast
-    A.GaussianBlur(blur_limit=(3, 7), p=0.1),
-    A.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=0.1),  # Adds elasticity for facial expression changes
-    A.GridDistortion(p=0.1),  # Deforms grid in image for slight expression changes
-    A.GaussNoise(var_limit=(10.0, 50.0), p=0.1)  # Adds Gaussian noise
+    A.GaussianBlur(blur_limit=(3, 7), p=0.1)
 ])
 
 input_path = './input_dataset/gray_scale_images/'
@@ -29,11 +26,11 @@ save_path = './input_dataset/'
 os.makedirs(save_path, exist_ok=True)
 
 persons = ['Adham_Allam', 'Dua_Lipa', 'Henry_Cavil', 'Scarelett_Johansson']
-num_augmentations_per_image = 40  # Number of augmented versions of each image
+num_augmentations_per_image = 20  # Number of augmented versions of each image
 all_images = []
 
 # Generate labels such that each person's label repeats 100 times
-all_labels = np.repeat([1, 2, 3, 4], 200)  # Repeats 1, 2, 3, and 4 each 100 times
+all_labels = np.repeat([1, 2, 3, 4], 100)  # Repeats 1, 2, 3, and 4 each 100 times
 
 for person in persons:
     person_images = [f'{input_path}{person}/{person}_{i}.png' for i in range(1, 6)]  # Assuming each person has 5 images

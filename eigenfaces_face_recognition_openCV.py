@@ -144,7 +144,7 @@ models_file = "trained_data_model.pkl"
 
 # testing image part // modified  
 
-test_image_path = "scarelett_johansson_5.jpg"
+test_image_path = "sc.jpg"
 test_image = cv2.imread(test_image_path)
 
 if(test_image is None ):
