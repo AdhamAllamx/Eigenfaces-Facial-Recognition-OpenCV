@@ -69,7 +69,14 @@ new_images = [
     # './input_dataset/henry_cavil/henry_cavil_5.jpeg',
 
     # './input_dataset/Adham_Allam/adham1.png',
-    './input_dataset/dua_lipa/dua_lipa_1.jpg',
+    # './input_dataset/Adham_Allam/allam6.png',
+    #     './input_dataset/Adham_Allam/allam7.png',
+            # './input_dataset/Adham_Allam/allam8.png',
+            './input_dataset/Adham_Allam/allam8.png',
+            # './input_dataset/Adham_Allam/Adham_Allam_0004.png',
+
+
+
 
 
     # './input_dataset/scarelett_johansson/scarelett_johansson_1.jpeg',

@@ -18,7 +18,8 @@ aug_transformation = A.Compose([
     A.Rotate(limit=20),
     A.HorizontalFlip(p=0.5),
     A.RandomBrightnessContrast(p=0.2),  # Adjust brightness and contrast
-    A.GaussianBlur(blur_limit=(3, 7), p=0.1)
+    A.GaussianBlur(blur_limit=(3, 7), p=0.1),
+
 ])
 
 input_path = './input_dataset/gray_scale_images/'
@@ -26,7 +27,7 @@ save_path = './input_dataset/'
 os.makedirs(save_path, exist_ok=True)
 
 persons = ['Adham_Allam', 'Dua_Lipa', 'Henry_Cavil', 'Scarelett_Johansson']
-num_augmentations_per_image = 20  # Number of augmented versions of each image
+num_augmentations_per_image = 10  # Number of augmented versions of each image
 all_images = []
 
 # Generate labels such that each person's label repeats 100 times
