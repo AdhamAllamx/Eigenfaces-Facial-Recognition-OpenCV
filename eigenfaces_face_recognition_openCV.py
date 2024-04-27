@@ -33,7 +33,7 @@ n_samples= faces_image.shape[0]
 print("targets are : ", faces_target)
 
 #display the original dataset
-n_images_to_display = 200 
+n_images_to_display = 100 
 plot_grid_size = int(np.ceil(np.sqrt(n_images_to_display)))
 
 fig, axes = plt.subplots(plot_grid_size, plot_grid_size, figsize=(10, 10))
@@ -101,7 +101,6 @@ plt.grid(True)
 plt.show()
 
 
-# Model parameter tuning visualization
 from sklearn.model_selection import validation_curve
 
 param_range = np.logspace(-4, -2, 20)  # Adjust this range based on your previous validation curve's results
@@ -144,7 +143,7 @@ models_file = "trained_data_model.pkl"
 
 # testing image part // modified  
 
-test_image_path = "scarelett_johansson_5.jpg"
+test_image_path = "dua_lipa_5.jpg"
 test_image = cv2.imread(test_image_path)
 
 if(test_image is None ):
