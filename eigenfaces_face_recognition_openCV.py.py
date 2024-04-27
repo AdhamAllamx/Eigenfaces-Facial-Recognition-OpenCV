@@ -1,4 +1,9 @@
 from __future__ import print_function
+
+import cProfile
+profiler = cProfile.Profile()
+profiler.enable()
+
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
@@ -55,10 +60,20 @@ faces_data = faces_image.reshape(n_samples, n_row * n_col)
 
 # Prepare the training and test data   // changes 
 X_train, X_test, y_train, y_test = train_test_split(faces_data, faces_target, test_size=0.25, random_state=42,stratify=faces_target)
-n_components = 50 # Adjust based on explained variance ratio or via cross-validation
+n_components = 120# Adjust based on explained variance ratio or via cross-validation
 
-pca = PCA(n_components=80, svd_solver='randomized', whiten=True).fit(X_train)
+print("xtrain : ",X_train)
+print("ytrain : ",y_train)
+print("xtest :" ,X_test)
+print("ytest :" ,y_test)
+X_train = X_train / 255.0
+X_test = X_test / 255.0
+
+
+pca = PCA(n_components=n_components, svd_solver='randomized', whiten=True).fit(X_train)
 print("Extracting the top %d eigenfaces from %d faces" % (n_components, X_train.shape[0]))
+
+
 
 X_train_pca = pca.transform(X_train)
 X_test_pca = pca.transform(X_test)
@@ -72,7 +87,7 @@ param_grid = {
 }
 
 
-svm = GridSearchCV(SVC(probability=True,class_weight='balanced'), param_grid, cv=StratifiedKFold(n_splits=5))
+svm = GridSearchCV(SVC(probability=True,class_weight='balanced'), param_grid, cv=StratifiedKFold(n_splits=6))
 svm.fit(X_train_pca, y_train)
 # Perform cross-validation on the training set
 print("Cross-validated scores:")
@@ -105,7 +120,7 @@ param_range = np.logspace(-6, -1, 20)  # Extended range
 
 # Create the validation curve
 train_scores, test_scores = validation_curve(
-    SVC(kernel='rbf', C=10, class_weight='balanced'),  # Use the best C found previously
+    SVC(kernel='rbf', C=5, class_weight='balanced'),  # Use the best C found previously
     X_train_pca, y_train,
     param_name="gamma",
     param_range=param_range,
@@ -141,7 +156,7 @@ models_file = "trained_data_model.pkl"
 
 # testing image part // modified  
 
-test_image_path = "scarelett_johansson_5.jpg"
+test_image_path = "sc3.jpg"
 test_image = cv2.imread(test_image_path)
 
 if(test_image is None ):
@@ -149,7 +164,7 @@ if(test_image is None ):
 else :
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml') 
     gray_test_image = cv2.cvtColor(test_image,cv2.COLOR_BGR2GRAY)  
-    faces = face_cascade.detectMultiScale(gray_test_image, scaleFactor=1.1 , minNeighbors=5 ,minSize=(30,30))
+    faces = face_cascade.detectMultiScale(gray_test_image, scaleFactor=1.1, minNeighbors=10, minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
 
     if(len(faces)==0):
         print("No faces detected OOPS!!")
@@ -176,8 +191,6 @@ else :
             print("prediction result for test image : ", proba)  
             # label = proba[0]
             # person_name = person_names.get(label , "Unknown")
-
-            
 
             # display the results for the test 
             cv2.putText(test_image,person_name,(x,y-10),cv2.FONT_HERSHEY_COMPLEX,0.9,(35,255,12),2)  
@@ -206,6 +219,9 @@ plt.imshow(cv2.cvtColor(test_image,cv2.COLOR_BGR2RGB))
 plt.axis('off')
 plt.title('Test Image with detected faces :')
 plt.show()
+
+profiler.disable()
+profiler.print_stats(sort='time')
 
 # Prepare an external image for prediction
 # test_image_path = "George_W_Bush_0019.jpg"
